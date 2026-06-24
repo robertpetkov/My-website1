@@ -1,0 +1,604 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>My NLP Journey — Progress Over Perfection</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,700;1,400&family=Inter:wght@300;400;500&display=swap');
+
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --ink:    #1A1A2E;
+    --mist:   #E8EAF0;
+    --glow:   #7C6FCD;
+    --bloom:  #E8826A;
+    --leaf:   #5BAF84;
+    --gold:   #D4A852;
+    --paper:  #F7F5F0;
+  }
+
+  body {
+    font-family: 'Inter', sans-serif;
+    background: var(--ink);
+    color: var(--paper);
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  /* ── PATH SPINE ── */
+  #app {
+    max-width: 680px;
+    margin: 0 auto;
+    padding: 0 20px 80px;
+  }
+
+  /* ── HERO ── */
+  .hero {
+    text-align: center;
+    padding: 60px 0 40px;
+    position: relative;
+  }
+  .hero-label {
+    font-size: 11px;
+    letter-spacing: 3px;
+    text-transform: uppercase;
+    color: var(--glow);
+    margin-bottom: 16px;
+  }
+  .hero h1 {
+    font-family: 'Playfair Display', serif;
+    font-size: clamp(2rem, 6vw, 3rem);
+    line-height: 1.15;
+    color: var(--paper);
+    margin-bottom: 12px;
+  }
+  .hero h1 em {
+    font-style: italic;
+    color: var(--bloom);
+  }
+  .hero p {
+    font-size: 15px;
+    color: #9090AA;
+    max-width: 420px;
+    margin: 0 auto 32px;
+    line-height: 1.7;
+  }
+
+  /* ── PROGRESS BAR ── */
+  .progress-track {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    justify-content: center;
+    margin-bottom: 48px;
+  }
+  .progress-dot {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: #333355;
+    transition: all 0.4s ease;
+  }
+  .progress-dot.done   { background: var(--leaf); }
+  .progress-dot.active { background: var(--bloom); transform: scale(1.4); }
+  .progress-line {
+    flex: 1; max-width: 40px; height: 1px;
+    background: #333355;
+    transition: background 0.4s;
+  }
+  .progress-line.done { background: var(--leaf); }
+
+  /* ── CARD ── */
+  .card {
+    background: #22223A;
+    border-radius: 20px;
+    padding: 36px 32px;
+    margin-bottom: 24px;
+    border: 1px solid #333355;
+    position: relative;
+    overflow: hidden;
+    animation: slideUp 0.5s ease both;
+  }
+  @keyframes slideUp {
+    from { opacity: 0; transform: translateY(20px); }
+    to   { opacity: 1; transform: translateY(0); }
+  }
+  .card::before {
+    content: '';
+    position: absolute;
+    top: 0; left: 0; right: 0;
+    height: 3px;
+    background: linear-gradient(90deg, var(--glow), var(--bloom));
+  }
+
+  .card-step {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--glow);
+    margin-bottom: 8px;
+  }
+  .card h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.5rem;
+    color: var(--paper);
+    margin-bottom: 16px;
+    line-height: 1.3;
+  }
+  .card .story {
+    font-size: 14px;
+    line-height: 1.75;
+    color: #AAAACC;
+    margin-bottom: 24px;
+  }
+  .card .story strong { color: var(--paper); font-weight: 500; }
+
+  /* ── GAME MECHANIC ── */
+  .mechanic-label {
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--gold);
+    margin-bottom: 12px;
+  }
+  .choices {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+  }
+  .choice-btn {
+    background: transparent;
+    border: 1px solid #444466;
+    border-radius: 12px;
+    padding: 14px 18px;
+    color: var(--paper);
+    font-family: 'Inter', sans-serif;
+    font-size: 14px;
+    cursor: pointer;
+    text-align: left;
+    transition: all 0.25s;
+    line-height: 1.5;
+  }
+  .choice-btn:hover {
+    border-color: var(--glow);
+    background: rgba(124,111,205,0.1);
+  }
+  .choice-btn.selected-wrong {
+    border-color: var(--bloom);
+    background: rgba(232,130,106,0.1);
+    animation: shake 0.4s ease;
+  }
+  .choice-btn.selected-right {
+    border-color: var(--leaf);
+    background: rgba(91,175,132,0.15);
+  }
+  @keyframes shake {
+    0%,100% { transform: translateX(0); }
+    25% { transform: translateX(-6px); }
+    75% { transform: translateX(6px); }
+  }
+
+  /* ── REVEAL ── */
+  .reveal {
+    margin-top: 20px;
+    background: rgba(91,175,132,0.08);
+    border: 1px solid rgba(91,175,132,0.3);
+    border-radius: 12px;
+    padding: 20px;
+    animation: fadeIn 0.4s ease;
+  }
+  @keyframes fadeIn {
+    from { opacity: 0; } to { opacity: 1; }
+  }
+  .reveal-icon { font-size: 24px; margin-bottom: 8px; }
+  .reveal h3 {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.1rem;
+    color: var(--leaf);
+    margin-bottom: 8px;
+  }
+  .reveal p {
+    font-size: 13px;
+    color: #AAAACC;
+    line-height: 1.7;
+  }
+  .reveal p strong { color: var(--paper); }
+
+  /* ── NEXT BTN ── */
+  .next-btn {
+    display: block;
+    width: 100%;
+    margin-top: 16px;
+    padding: 16px;
+    background: linear-gradient(135deg, var(--glow), var(--bloom));
+    border: none;
+    border-radius: 12px;
+    color: #fff;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    font-weight: 500;
+    cursor: pointer;
+    transition: opacity 0.2s, transform 0.2s;
+  }
+  .next-btn:hover { opacity: 0.9; transform: translateY(-1px); }
+
+  /* ── IMPERFECT STEPS COUNTER ── */
+  .imperfect-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    background: rgba(212,168,82,0.12);
+    border: 1px solid rgba(212,168,82,0.3);
+    border-radius: 20px;
+    padding: 6px 14px;
+    font-size: 12px;
+    color: var(--gold);
+    margin-bottom: 16px;
+  }
+
+  /* ── FINAL SCREEN ── */
+  .final {
+    text-align: center;
+    padding: 48px 24px;
+    animation: slideUp 0.6s ease;
+  }
+  .final .big-emoji { font-size: 64px; margin-bottom: 24px; }
+  .final h2 {
+    font-family: 'Playfair Display', serif;
+    font-size: 2rem;
+    color: var(--paper);
+    margin-bottom: 16px;
+  }
+  .final h2 em { color: var(--bloom); font-style: italic; }
+  .final .summary-grid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 12px;
+    margin: 32px 0;
+    text-align: left;
+  }
+  .summary-item {
+    background: #22223A;
+    border-radius: 14px;
+    padding: 16px;
+    border: 1px solid #333355;
+  }
+  .summary-item .q {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 1.5px;
+    color: var(--glow);
+    margin-bottom: 6px;
+  }
+  .summary-item .a {
+    font-size: 13px;
+    color: var(--paper);
+    line-height: 1.5;
+  }
+  .final-lesson {
+    background: linear-gradient(135deg, rgba(124,111,205,0.15), rgba(232,130,106,0.15));
+    border-radius: 16px;
+    padding: 28px;
+    border: 1px solid rgba(124,111,205,0.3);
+    margin-bottom: 28px;
+  }
+  .final-lesson p {
+    font-family: 'Playfair Display', serif;
+    font-size: 1.2rem;
+    font-style: italic;
+    color: var(--paper);
+    line-height: 1.6;
+  }
+  .final-lesson .attr {
+    font-family: 'Inter', sans-serif;
+    font-size: 11px;
+    letter-spacing: 2px;
+    text-transform: uppercase;
+    color: var(--glow);
+    margin-top: 12px;
+    font-style: normal;
+  }
+  .restart-btn {
+    background: transparent;
+    border: 1px solid #444466;
+    border-radius: 12px;
+    padding: 12px 28px;
+    color: #9090AA;
+    font-family: 'Inter', sans-serif;
+    font-size: 13px;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+  .restart-btn:hover { border-color: var(--glow); color: var(--paper); }
+
+  /* ── PATH CONNECTOR ── */
+  .path-connector {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    color: #444466;
+    font-size: 20px;
+    padding: 4px 0 4px;
+  }
+
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="app">
+
+  <!-- HERO -->
+  <div class="hero">
+    <div class="hero-label">NLP Practitioner — Personal Exam</div>
+    <h1>My Journey is<br><em>Not Perfect.</em><br>That's the Point.</h1>
+    <p>A short interactive experience. Make choices. Get it "wrong." Discover why the imperfect path is the only path that actually works.</p>
+  </div>
+
+  <!-- PROGRESS -->
+  <div class="progress-track" id="progressTrack"></div>
+
+  <!-- GAME AREA -->
+  <div id="gameArea"></div>
+
+</div>
+
+<script>
+const steps = [
+  {
+    question: "What does NLP mean to you?",
+    stepLabel: "Chapter 1 of 5",
+    title: "What even IS NLP?",
+    story: `Before NLP, I thought change was about <strong>willpower</strong> — just push harder, try harder, be better. I kept waiting until I was "ready." Until things were perfect enough to start.
+
+Then NLP showed me something radical: <strong>the map is not the territory.</strong> My mind had been using old, outdated maps to navigate my life.`,
+    mechanic: "The audience faces a choice:",
+    choices: [
+      { text: "Keep the old map. It's familiar, it's safe. Study it more before moving.", wrong: true, label: "Perfection trap" },
+      { text: "Start walking with a rough map. Update it as you go.", wrong: false, label: "Progress path" },
+      { text: "Don't move until you have the perfect map.", wrong: true, label: "Paralysis" }
+    ],
+    reveal: {
+      icon: "🧠",
+      heading: "NLP Insight: The map is not the territory",
+      text: `To me, NLP means <strong>learning to update your maps</strong> — your beliefs, your language, your inner representations — so they serve you better. It's not about being perfect. It's about being <strong>aware and flexible</strong> enough to change course.`
+    }
+  },
+  {
+    question: "What has NLP done for you?",
+    stepLabel: "Chapter 2 of 5",
+    title: "The moment everything shifted",
+    story: `I used to replay conversations in my head — in vivid detail, huge, close, loud — all the things I said wrong. My inner critic had a <strong>submodality upgrade</strong> I never asked for.
+
+NLP gave me the controls back. I learned I could <strong>shrink the image, push it away, drain the color.</strong> What felt like a permanent wound became... just a memory.`,
+    mechanic: "Try it. You have a painful memory. What do you do?",
+    choices: [
+      { text: "Play it on repeat, full HD, maximum volume. Analyze every detail until you understand it completely.", wrong: true, label: "Old strategy" },
+      { text: "Shrink it to a small, faded polaroid. Set it on a shelf far away.", wrong: false, label: "Submodalities" },
+      { text: "Pretend it never happened and suppress it entirely.", wrong: true, label: "Avoidance" }
+    ],
+    reveal: {
+      icon: "🎛️",
+      heading: "NLP changed how I process experience",
+      text: `NLP gave me <strong>actual tools</strong> — not just theory. Submodalities, anchoring, reframing. The ability to change the <em>structure</em> of a memory, not just its content. For the first time, I felt like I had agency over my own mind.`
+    }
+  },
+  {
+    question: "How has NLP influenced your life?",
+    stepLabel: "Chapter 3 of 5",
+    title: "The perfectionist trap I lived in",
+    story: `Here's something I never said out loud: <strong>I used perfectionism as protection.</strong>
+
+If I never finished, I could never fail. If I never started, I could never disappoint anyone. NLP helped me see the <strong>positive intention behind every behavior</strong> — even the ones hurting me.
+
+My perfectionism wasn't the enemy. It was a scared protector using an outdated strategy.`,
+    mechanic: "You're about to present something unfinished. What does your inner voice say?",
+    choices: [
+      { text: "\"It's not ready. One more revision. You'll embarrass yourself.\"", wrong: true, label: "Inner critic" },
+      { text: "\"This is good enough to share. Feedback will make it better.\"", wrong: false, label: "Growth mindset" },
+      { text: "\"Whatever. People will judge anyway. Why bother.\"", wrong: true, label: "Resignation" }
+    ],
+    reveal: {
+      icon: "🌱",
+      heading: "NLP reframed my relationship with imperfection",
+      text: `NLP taught me to ask: <strong>"What is the positive intention here?"</strong> My perfectionism wanted safety. Once I acknowledged that, I could find safer, better strategies — like sharing work-in-progress and <strong>growing through feedback</strong> instead of hiding from it.`
+    }
+  },
+  {
+    question: "Which part of NLP attracts you most?",
+    stepLabel: "Chapter 4 of 5",
+    title: "Language changes everything",
+    story: `Out of all NLP tools, I keep coming back to one: <strong>language patterns and reframing.</strong>
+
+The words we use don't just describe reality — they <em>create</em> it. "I have to do this" versus "I get to do this." Same action. Completely different neurological experience.
+
+Reframing isn't lying to yourself. It's <strong>choosing a more useful truth.</strong>`,
+    mechanic: "Which reframe is most powerful?",
+    choices: [
+      { text: "\"I failed\" → \"I found out what doesn't work.\"", wrong: false, label: "Content reframe" },
+      { text: "\"I failed\" → \"It doesn't matter.\"", wrong: true, label: "Denial" },
+      { text: "\"I failed\" → \"I should have tried harder.\"", wrong: true, label: "Self-blame loop" }
+    ],
+    reveal: {
+      icon: "🔤",
+      heading: "Language is the code of the mind",
+      text: `Reframing is my favorite NLP tool because it's <strong>always available</strong>. No equipment needed. No special setting. Just the decision to find a frame that serves you better. Edison didn't fail 10,000 times — he found 10,000 ways that didn't work. <strong>Same events. Different map. Different life.</strong>`
+    }
+  },
+  {
+    question: "How do you apply NLP in your life?",
+    stepLabel: "Chapter 5 of 5",
+    title: "Progress. Not perfection.",
+    story: `I apply NLP every day in one specific way: I <strong>catch myself waiting for perfect conditions</strong> — and I choose to act anyway.
+
+NLP gave me the anchors to shift state instantly. The language patterns to reframe doubt. The presuppositions to trust that <strong>people — including me — have the resources they need.</strong>
+
+And I apply it imperfectly. That's not a flaw. That's the practice.`,
+    mechanic: "You're learning something new. How do you apply it?",
+    choices: [
+      { text: "Wait until you've practiced privately for 6 months before using it in real life.", wrong: true, label: "Delay strategy" },
+      { text: "Apply it today, imperfectly, and learn from what happens.", wrong: false, label: "NLP way" },
+      { text: "Read more about it first. You need more theory.", wrong: true, label: "Analysis paralysis" }
+    ],
+    reveal: {
+      icon: "🎯",
+      heading: "NLP is a practice, not a destination",
+      text: `I apply NLP by <strong>treating my life as a laboratory</strong>. Every conversation is a chance to calibrate, to build rapport, to notice representational systems. I'm not perfect at it. But with every imperfect attempt, the map gets better. <strong>That's exactly what NLP taught me.</strong>`
+    }
+  }
+];
+
+let currentStep = 0;
+let wrongChoices = 0;
+let answered = [];
+
+function buildProgress() {
+  const track = document.getElementById('progressTrack');
+  track.innerHTML = '';
+  steps.forEach((_, i) => {
+    const dot = document.createElement('div');
+    dot.className = 'progress-dot' + (i < currentStep ? ' done' : i === currentStep ? ' active' : '');
+    track.appendChild(dot);
+    if (i < steps.length - 1) {
+      const line = document.createElement('div');
+      line.className = 'progress-line' + (i < currentStep ? ' done' : '');
+      track.appendChild(line);
+    }
+  });
+}
+
+function renderStep(index) {
+  buildProgress();
+  const s = steps[index];
+  const area = document.getElementById('gameArea');
+  area.innerHTML = '';
+
+  const card = document.createElement('div');
+  card.className = 'card';
+
+  card.innerHTML = `
+    <div class="card-step">${s.stepLabel}</div>
+    ${wrongChoices > 0 ? `<div class="imperfect-badge">⚡ ${wrongChoices} imperfect step${wrongChoices>1?'s':''} taken — still moving forward</div>` : ''}
+    <h2>${s.title}</h2>
+    <div class="story">${s.story}</div>
+    <div class="mechanic-label">🎮 ${s.mechanic}</div>
+    <div class="choices" id="choices"></div>
+    <div id="reveal" class="reveal hidden"></div>
+    <button class="next-btn hidden" id="nextBtn" onclick="nextStep()">${index === steps.length - 1 ? 'See my full NLP journey →' : 'Continue the journey →'}</button>
+  `;
+  area.appendChild(card);
+
+  const choicesEl = document.getElementById('choices');
+  s.choices.forEach((c, ci) => {
+    const btn = document.createElement('button');
+    btn.className = 'choice-btn';
+    btn.innerHTML = c.text;
+    btn.onclick = () => handleChoice(ci, c.wrong, s);
+    choicesEl.appendChild(btn);
+  });
+}
+
+function handleChoice(ci, isWrong, s) {
+  const btns = document.querySelectorAll('.choice-btn');
+  btns.forEach(b => b.onclick = null);
+
+  const chosen = btns[ci];
+  if (isWrong) {
+    wrongChoices++;
+    chosen.classList.add('selected-wrong');
+    // show wrong feedback briefly, then reveal correct
+    setTimeout(() => {
+      showReveal(s, true);
+    }, 700);
+  } else {
+    chosen.classList.add('selected-right');
+    showReveal(s, false);
+  }
+  answered.push({ step: currentStep, wrong: isWrong });
+}
+
+function showReveal(s, wasWrong) {
+  const r = s.reveal;
+  const revealEl = document.getElementById('reveal');
+  revealEl.innerHTML = `
+    <div class="reveal-icon">${r.icon}</div>
+    ${wasWrong ? '<p style="color:var(--bloom);font-size:13px;margin-bottom:10px;">That\'s the perfectionist path — and it\'s very human. Here\'s what NLP says instead:</p>' : '<p style="color:var(--leaf);font-size:13px;margin-bottom:10px;">Exactly right. Here\'s the deeper insight:</p>'}
+    <h3>${r.heading}</h3>
+    <p>${r.text}</p>
+  `;
+  revealEl.classList.remove('hidden');
+  document.getElementById('nextBtn').classList.remove('hidden');
+}
+
+function nextStep() {
+  currentStep++;
+  if (currentStep >= steps.length) {
+    showFinal();
+  } else {
+    renderStep(currentStep);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+}
+
+function showFinal() {
+  buildProgress();
+  const area = document.getElementById('gameArea');
+  const correctCount = answered.filter(a => !a.wrong).length;
+
+  area.innerHTML = `
+    <div class="final">
+      <div class="big-emoji">🌿</div>
+      <h2>Journey <em>complete.</em></h2>
+      <p style="color:#9090AA;font-size:15px;line-height:1.7;margin-bottom:28px;">
+        You took <strong style="color:var(--paper)">${correctCount} of 5</strong> progressive steps right away — and <strong style="color:var(--bloom)">${wrongChoices} imperfect step${wrongChoices!==1?'s':''}</strong> that still moved you forward.<br><br>
+        <em style="color:var(--gold)">That ratio? That IS the NLP journey.</em>
+      </p>
+
+      <div class="final-lesson">
+        <p>"The person with the most flexibility in their behavior has the most influence in the system — not the person with the most perfect behavior."</p>
+        <div class="attr">NLP Presupposition — Adapted</div>
+      </div>
+
+      <div class="summary-grid">
+        <div class="summary-item">
+          <div class="q">NLP means to me</div>
+          <div class="a">Updating my mental maps to navigate life with more flexibility and awareness</div>
+        </div>
+        <div class="summary-item">
+          <div class="q">What NLP did for me</div>
+          <div class="a">Gave me the controls over my own internal states and representations</div>
+        </div>
+        <div class="summary-item">
+          <div class="q">How it influenced my life</div>
+          <div class="a">Freed me from perfectionism by finding its positive intention</div>
+        </div>
+        <div class="summary-item">
+          <div class="q">What I love most</div>
+          <div class="a">Language reframing — the ability to choose a more useful truth</div>
+        </div>
+      </div>
+
+      <div class="summary-item" style="margin-bottom:24px;text-align:left">
+        <div class="q">How I apply NLP daily</div>
+        <div class="a">I act imperfectly and use every interaction as a calibration. Progress, not perfection — that's the practice.</div>
+      </div>
+
+      <button class="restart-btn" onclick="restartGame()">↩ Play again</button>
+    </div>
+  `;
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+function restartGame() {
+  currentStep = 0;
+  wrongChoices = 0;
+  answered = [];
+  renderStep(0);
+  window.scrollTo({ top: 0, behavior: 'smooth' });
+}
+
+// Init
+renderStep(0);
+</script>
+</body>
+</html>
